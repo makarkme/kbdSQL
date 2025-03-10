@@ -29,3 +29,29 @@
     - базовые команды, например, SELECT, WHERE
     - операторы сравнения, например, =, >, <, >=, <=, !=
     - логические операторы, например, AND, OR, NOT
+
+## Использование:
+
+# Добавление эл-ов в БД
+
+db = Database("test_db")
+    users = db.get_collection("users")
+    
+    # Очищаем коллекцию
+    for f in os.listdir(users.path):
+        os.remove(os.path.join(users.path, f))
+    
+    # Новые тестовые данные
+    users.insert({
+        "name": "Alice",
+        "age": 25,
+        "email": "Alice@Example.com",
+        "tags": ["admin", "user"],
+        "bio": "Python developer"
+    })
+
+# Получение из БД
+
+print("\nПользователи младше или равные 35:")
+    for user in users.find({"age": {"$lte": 35}}):
+        print(f"{user['name']} ({user['age']})")
