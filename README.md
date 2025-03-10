@@ -52,6 +52,6 @@ db = Database("test_db")
 
 # Получение из БД
 
-print("\nПользователи младше или равные 35:")
+    print("\nПользователи младше или равные 35:")
     for user in users.find({"age": {"$lte": 35}}):
         print(f"{user['name']} ({user['age']})")
