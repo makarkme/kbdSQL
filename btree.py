@@ -19,6 +19,11 @@ class BTree:
         else:
             self._insert_key_value(key, [doc_id])
 
+    def search(self, operator, value):
+        results = []
+        self._traverse_tree(self.root, operator, value, results)
+        return [doc_id for sublist in results for doc_id in sublist]
+
     def _search_node(self, node, key):
         i = 0
         while i < len(node.keys) and key > node.keys[i]:
