@@ -90,12 +90,11 @@ class DBShell(cmd.Cmd):
         pass
 
 def main():
-    if len(sys.argv) > 2:
+    if len(sys.argv) < 2:
         print("Usage: jdb <database_name>")
         return
     
-    #db_name = sys.argv[1]
-    db_name = "test_db"
+    db_name = sys.argv[1]
     db = Database(db_name)
     DBShell(db).cmdloop()
 
