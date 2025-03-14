@@ -20,12 +20,12 @@ class DBShell(cmd.Cmd):
         self.current_collection = None
     
     def do_use(self, arg):
-        """Switch to a collection: USE <collection_name>"""
+        # Использовать другую коллекцию: USE <collection_name>
         self.current_collection = self.db.get_collection(arg)
         print(f"Switched to collection '{arg}'")
     
     def do_insert(self, arg):
-        """Insert document: INSERT {json_document}"""
+        # Вставить новый документ: INSERT {json_document}
         if not self.current_collection:
             print("No collection selected! Use USE first")
             return
@@ -40,7 +40,7 @@ class DBShell(cmd.Cmd):
             print(f"Error: {e}")
     
     def do_index(self, arg):
-        """Create index: INDEX <field_name>"""
+        # Проиндексировать по полю: INDEX <field_name>
         if not self.current_collection:
             print("No collection selected! Use USE first")
             return
@@ -49,7 +49,7 @@ class DBShell(cmd.Cmd):
         print(f"Index created on field '{arg}'")
     
     def do_find(self, arg):
-        """Find documents: FIND {query_json}"""
+        # Найти документы в коллекции: FIND {query_json}
         if not self.current_collection:
             print("No collection selected! Use USE first")
             return
@@ -65,7 +65,7 @@ class DBShell(cmd.Cmd):
             print(f"Query error: {e}")
     
     def do_exit(self, arg):
-        """Exit the database shell"""
+        # Выход
         print("Exiting...")
         sys.exit(0)
     
