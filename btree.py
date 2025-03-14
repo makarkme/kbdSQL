@@ -97,7 +97,7 @@ class BTree:
                 (operator == "$lt" and key < target) or
                 (operator == "$lte" and key <= target)
             ):
-                results.update(node.values[i])
+                results.append(node.values[i])
             
             i += 1
 
