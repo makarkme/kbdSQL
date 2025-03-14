@@ -18,8 +18,8 @@ class Collection:
         with open(file_path, 'w') as f:
             json.dump(document, f)
         for field, index in self.indexes.items():
-            value = self._get_nested_field(document, field)
-            if value is not None:
+            values = self._get_index_values(document, field)
+            for value in values:
                 index.btree.insert(value, doc_id)
         return doc_id
 
@@ -28,8 +28,8 @@ class Collection:
             return
         index = Index(field)
         for doc_id, doc in self._get_all_docs_with_ids():
-            value = self._get_nested_field(doc, field)
-            if value is not None:
+            values = self._get_index_values(doc, field)
+            for value in values:
                 index.btree.insert(value, doc_id)
         self.indexes[field] = index
 
@@ -212,7 +212,9 @@ class Collection:
     def _create_lower_condition(self, field, value):
         def check(doc):
             doc_val = self._get_nested_field(doc, field)
-            return str(doc_val).lower() == value.lower() if doc_val else False
+            if isinstance(doc_val, str):
+                return doc_val.lower() == value.lower()
+            return False
         return check
 
     def _create_upper_condition(self, field, value):
@@ -220,3 +222,9 @@ class Collection:
             doc_val = self._get_nested_field(doc, field)
             return str(doc_val).upper() == value.upper() if doc_val else False
         return check
+    
+    def _get_index_values(self, doc, field):
+        value = self._get_nested_field(doc, field)
+        if isinstance(value, list):
+            return value
+        return [value] if value is not None else []

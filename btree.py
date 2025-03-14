@@ -77,11 +77,6 @@ class BTree:
         
         parent.children.insert(idx+1, new_node)
 
-    def search(self, operator, value):
-        results = []
-        self._traverse_tree(self.root, operator, value, results)
-        return [doc_id for sublist in results for doc_id in sublist]
-
     def _traverse_tree(self, node, operator, target, results):
         i = 0
         while i < len(node.keys):
@@ -97,7 +92,7 @@ class BTree:
                 (operator == "$lt" and key < target) or
                 (operator == "$lte" and key <= target)
             ):
-                results.append(node.values[i])
+                results.update(node.values[i])
             
             i += 1
 
