@@ -86,7 +86,7 @@
 
 3. Выполняйте операции вставки, создания индексов и поиска
 
-# Добавление эл-ов в БД
+# Добавление эл-ов в БД (В коде)
 
     db = Database("test_db")
     users = db.get_collection("users")
@@ -104,7 +104,21 @@
         "bio": "Python developer"
     })
 
-# Получение из БД
+# Добавление эл-ов в БД (В CLI)
+
+    # Запуск
+    python jdb.py test_db
+
+    jdb> USE users
+    Switched to collection 'users'
+
+    jdb> INSERT {'name': 'Alice', 'age': 25, 'tags': ['admin']}
+    Inserted document ID: d7a3b9c1...
+
+    jdb> INDEX age
+    Index created on field 'age'
+
+# Получение из БД (В коде)
 
     Поиск всех документов: find({})
 
@@ -117,3 +131,17 @@
     print("\nПользователи младше или равные 35:")
     for user in users.find({"age": {"$lte": 35}}):
         print(f"{user['name']} ({user['age']})")
+
+# Получение из БД (В CLI)
+
+    jdb> FIND {'age': {'$gt': 20}}
+    {
+    "name": "Alice",
+    "age": 25,
+    "tags": ["admin"],
+    "_id": "d7a3b9c1..."
+    }
+    Found 1 documents
+
+    jdb> EXIT
+    Exiting...
