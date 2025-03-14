@@ -220,7 +220,9 @@ class Collection:
     def _create_upper_condition(self, field, value):
         def check(doc):
             doc_val = self._get_nested_field(doc, field)
-            return str(doc_val).upper() == value.upper() if doc_val else False
+            if isinstance(doc_val, str):
+                return doc_val.upper() == value.upper()
+            return False
         return check
     
     def _get_index_values(self, doc, field):
