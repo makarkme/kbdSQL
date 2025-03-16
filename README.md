@@ -107,7 +107,7 @@
 # Добавление эл-ов в БД (В CLI)
 
     # Запуск
-    python jdb.py test_db
+    python main.py test_db
 
     jdb> USE users
     Switched to collection 'users'
