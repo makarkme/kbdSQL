@@ -134,12 +134,19 @@ class BTree:
 
         child.slice_data(0, split)                                  # Разделяем значения между 2 дочерними узлами (учитываем, что перекинули центральное значение в родительский узел)
         new_child_node.slice_data(split + 1, len(new_child_node.get_keys()))
+        # new_child_node.slice_data(split + 1, 2 * (split + 1) - 1)
 
         if not child.leaf:                                          # Разделяем дочерние узлы между 2 узлами
             child.children = child.children[:split + 1]
             new_child_node.children = child.children[split + 1:]
 
-    def delete(self, key, node=None):
+    def delete(self, key, node=None, key_exists=None):
+        if key_exists is None:
+            if self.search(key) is None:
+                return -1                                           # Возвращаем исключение - удаляемого ключа не существует в дереве
+            else:
+                key_exists = True
+
         if node is None:
             node = self.root
 
@@ -154,7 +161,7 @@ class BTree:
         if i < len(node.get_keys()) and node.get_keys()[i] == key:  # Если нашли key в текущем узле
             return self._delete_internal_node(node, key, i)
         elif len(node.children[i].get_keys()) >= self.t:            # Если не нашли key в текущем узле и условие с t выполняется, рекурсивно ищем в дочернем узле
-            self.delete(key, node.children[i])
+            self.delete(key, node.children[i], key_exists)
         else:                                                       # Если не нашли key в текущем узле и условие с t не выполняется
             if i != 0 and i + 2 < len(node.children):               # Если у текущего узла есть сосед слева и справа
                 if len(node.children[i - 1].get_keys()) >= self.t:  # Если у левого соседа можно одолжить ключ - перемещаем этот ключ
@@ -173,7 +180,7 @@ class BTree:
                     self._delete_sibling(node, i, i - 1)
                 else:                                               # Иначе объединяем узлы
                     self._delete_merge(node, i, i - 1)
-            self.delete(key, node.children[i])                      # Рекурсивный вызов для повторного просмотра и удаления
+            self.delete(key, node.children[i], key_exists)          # Рекурсивный вызов для повторного просмотра и удаления
 
     def _delete_internal_node(self, node, key, i):
         if node.leaf:                                               # Если нашли key и он находится в листе - просто удаляем его
@@ -186,7 +193,7 @@ class BTree:
             node.replace_data(i, predecessor_key, predecessor_value)
             return
         elif len(node.children[i + 1].get_keys()) >= self.t:        # Если правый ребёнок имеет хотя бы t ключей - заменяем удаляемый ключ на минимальный ключ в правом поддереве
-            successor_key, successor_value = self._delete_successor(node.children[i])
+            successor_key, successor_value = self._delete_successor(node.children[i + 1])
             node.replace_data(i, successor_key, successor_value)
             return
         else:                                                       # Если условие для узлов ломается - объединяем их
