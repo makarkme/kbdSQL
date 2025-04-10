@@ -200,7 +200,7 @@ class BTree:
             self._delete_merge(node, i, i + 1)
             self._delete_internal_node(node.children[i], key, self.t - 1) # Рекурсивный вызов из дочернего узла
 
-    def _delete_predecessor(self, node):                             # Удаляет из узла максимальное (самое правое) ключ-значение и возвращает его
+    def _delete_predecessor(self, node):                            # Удаляет из узла максимальное (самое правое) ключ-значение и возвращает его
         if node.leaf:
             key, value = node.get_pair(-1)
             node.pop_pair(-1)
@@ -213,7 +213,7 @@ class BTree:
             self._delete_merge(node, last_key_index, last_key_index + 1)
         return self._delete_predecessor(node.children[last_key_index])
 
-    def _delete_successor(self, node):                               # Удаляет из узла минимальное (самое левое) ключ-значение и возвращает его
+    def _delete_successor(self, node):                              # Удаляет из узла минимальное (самое левое) ключ-значение и возвращает его
         if node.leaf:
             key, value = node.get_pair(0)
             node.pop_pair(0)
@@ -278,17 +278,3 @@ class BTree:
             left_child.pop_pair(-1)
             if len(left_child.children) > 0:                        # Если есть дочерние узлы, переносим последнего ребёнка из левого соседа в начало
                 add_node.children.insert(0, left_child.children.pop())
-
-    # def print_tree(self, node=None, level=0):
-    #     if node is None:
-    #         node = self.root
-    #
-    #     print(f'Level {level}', end=": ")
-    #     for i in range(len(node.get_keys())):
-    #         print(node.get_pair(i), end=" ")
-    #     print()
-    #     level += 1
-    #
-    #     if len(node.children) > 0:
-    #         for i in node.children:
-    #             self.print_tree(i, level)
