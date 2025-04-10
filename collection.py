@@ -1,173 +1,82 @@
 import os
 import uuid
 import json
-import pickle
+import jsonpath_ng
+import jsonpath_ng.exceptions
 
-from btree import BTree
 from query_engine import QueryEngine
-
-class Index:
-    def __init__(self, field, btree=BTree(3)):
-        self.field = field
-        self.btree = btree
-
+from indexation import Indexation
 
 
 class Collection:
-    def __init__(self, collection: str, path_to_database: str):
-        self.query_engine = QueryEngine(self.get_value)
-        self.name_collection = collection
+    def __init__(self, path_to_collection: str):
+        self.MAX_DEPTH = 50                                         # Максимальная глубина вложений в json-документе
 
-        self.path_to_collection = os.path.join(path_to_database, self.name_collection)
-        self.path_to_indexes = os.path.join(self.path_to_collection, "./indexes")
-        os.makedirs(self.path_to_collection, exist_ok=True)
+
+        self.path_to_collection = path_to_collection
+
+        self.path_to_indexes = os.path.join(self.path_to_collection, "indexes")
         os.makedirs(self.path_to_indexes, exist_ok=True)
 
-        self.indexes = self.load_indexes()                              # Загружаем с диска проиндексированные поля {key=field; value=value}
+        self.query_engine = QueryEngine(self)
+        self.indexation = Indexation(self)
 
-        self.MAX_DEPTH = 50                                             # Максимальная глубина вложений в json-документе
+    def insert(self, json_document: dict) -> str:
+        filename = str(uuid.uuid4())                                # Генерация уникального id документа
 
-    def load_indexes(self):
-        indexes = {}
-        for filename in os.listdir(self.path_to_indexes):
-            if filename.endswith(".pkl"):
-                field = filename[:-len(".pkl")]                         # Убираем ".pkl" в конце имени файла (получаем поле, по которому индексировали)
-                path_to_index = os.path.join(self.path_to_indexes, filename)
-                with open(path_to_index, "rb") as file:
-                    btree = pickle.load(file)
-                indexes[field] = Index(field, btree)
-        return indexes
+        path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
+        with open(path_to_json_document, "w", encoding="utf-8") as file:
+            json.dump(json_document, file, indent=2, ensure_ascii=False)
 
-    def create_index(self, field: str) -> int:
-        if field in self.indexes:
-            return 0
+        return filename
 
-        index = Index(field)
-        count = 0
-        for doc_id, doc in self.get_docs():
-            values = self.wrap_in_list(doc, field)                      # Получаю значение из каждого json-документа по указанному полю
-            for value in values:                                        # Если это список значений, а не одно значение
-                index.btree.insert(value, doc_id)
-                count += 1
+    def search_by_condition(self, query: dict) -> list:
+        indexes = self.indexation.get_indexes()
 
-        path_to_index = os.path.join(self.path_to_indexes, f"{field}.pkl")
-        with open(path_to_index, "wb") as file:
-            pickle.dump(index.btree, file)
-
-        self.indexes[field] = index                                     # То, что проиндексировано
-        return count
-
-    def get_docs(self) -> list:                                         # Возвращает массив json-документов
-        result = []
-        for filename in os.listdir(self.path_to_collection):
-            if filename.endswith(".json"):
-                doc_id = filename[:-len(".json")]                       # Убираем ".json" в конце имени файла
-                doc = self.get_doc(doc_id)
-                if doc:
-                    result.append((doc_id, doc))
-        return result
-
-    def get_doc(self, doc_id: str):                                     # Возвращает json-документ
-        path_to_doc = os.path.join(self.path_to_collection, f"{doc_id}.json")
-
-        if not os.path.exists(path_to_doc):                                # Если документ не найден
-            return None
-
-        with open(path_to_doc, encoding='utf-8') as file:
-            return json.load(file)
-
-    def collection_insert(self, doc: dict) -> str:
-        doc_id = str(uuid.uuid4())                                      # Генерации уникальных id документов
-
-        path_to_json = os.path.join(self.path_to_collection, f"{doc_id}.json")
-        with open(path_to_json, "w", encoding="utf-8") as file:
-            json.dump(doc, file, indent=2, ensure_ascii=False)
-
-        # field - поле, по которому мы смотрим; index - значение, которое отправится в b-дерево
-        for field, index in self.indexes.items():
-            values = self.wrap_in_list(doc, field)                      # Получаю значение из каждого json-документа по указанному полю
-            for value in values:                                        # Если это список значений, а не одно значение
-                index.btree.insert(value, doc_id)
-
-            path_to_index = os.path.join(self.path_to_indexes, f"{field}.pkl")  # Сохраняем обновлённое дерево на диск
-            with open(path_to_index, "wb") as file:
-                pickle.dump(index.btree, file)
-
-        return doc_id
-
-    def wrap_in_list(self, doc, field: str) -> list:                    # Оборачиваем значение в массив
-        value = self.get_value(doc, field)
-        if isinstance(value, list):
-            return value
-        elif value is not None:
-            return [value]
-        else:
-            return []
-
-    def get_value(self, doc, field: str):                               # Находит вложенное значение
-        parts = field.split(".")
-        if len(parts) > self.MAX_DEPTH:                                 # Ограничиваем максмальное число вложенностей
-            return None
-
-        for part in parts:
-            if isinstance(doc, dict):                                   # Спускаемся на уровень ниже
-                doc = doc.get(part)
-            elif isinstance(doc, list):                                 # Дошли до конца
-                try:
-                    index = int(part)
-                    if index < len(doc):                                # Проверяем, не указан ли неверный индекс
-                        doc = doc[index]
-                    else:
-                        return None
-                except ValueError:                                      # Если part не число
-                    return None
-            else:
-                return None
-            if doc is None:
-                return None
-        return doc
-
-
-    def find_doc(self, query: dict) -> list:
-        index_field = None
+        search_field = None
         for field in query:
-            if field in self.indexes:
-                index_field = field
+            if field in indexes:
+                search_field = field
                 break
 
-        if index_field:
-            return self.index_search(index_field, query)
-        return self.all_search(query)
+        if search_field:
+            return self.indexation.indexed_search(search_field, query)
+        return self._complete_search(query)
 
-    def index_search(self, field: str, query: dict) -> list:            # Поиск производится индексированным полям
-        index = self.indexes[field]                                     # B-дерево, в котором будет вестить поиск
-        condition = query.get(field)                                    # Условие
+    def _complete_search(self, query: dict) -> list:                # Поиск производится по всем документам
+        condition = self.query_engine.parse_query(query)
 
-        if condition is None:
+        json_documents = []
+        for filename, json_document in self.get_jsons():            # Список всех документов (распаковываем кортеж)
+            if json_document and condition(json_document):
+                json_documents.append(json_document)
+        return json_documents
+
+    def get_jsons(self) -> list:                                    # Возвращает массив json-документов
+        json_documents = []
+        for file in os.listdir(self.path_to_collection):
+            if file.endswith(".json"):
+                filename = file[:-len(".json")]                     # Убираем ".json" в конце имени файла
+                json_document = self.get_json(filename)
+                if json_document:
+                    json_documents.append((filename, json_document))
+        return json_documents
+
+    def get_json(self, filename: str):                              # Возвращает json-документ
+        path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
+        if not os.path.exists(path_to_json_document):
+            return None
+        with open(path_to_json_document, encoding="utf-8") as file:
+            return json.load(file)
+
+    def get_value(self, json_document, field: str) -> list:         # Находит вложенное значение
+        if field.count(".") > self.MAX_DEPTH:                       # Ограничиваем максмальное число вложенностей
             return []
 
-        if isinstance(condition, dict) and condition:
-            operator, value = next(iter(condition.items()))
-        else:
-            operator, value = "$eq", condition
-
-        doc_ids = index.btree.search(operator, value)                   # Список подходящих документов
-        query_func = self.query_engine.parse_query(query)
-
-        result = []
-        for doc_id in doc_ids:
-            doc = self.get_doc(doc_id)
-            if doc and query_func(doc):
-                result.append(doc)
-
-        return result
-
-    def all_search(self, query: dict) -> list:                          # Поиск производится по всем документам
-        query_func = self.query_engine.parse_query(query)
-        all_docs = self.get_docs()
-
-        result = []
-        for _, doc in all_docs:                                         # Список всех документов (распаковываем кортеж)
-            if doc and query_func(doc):
-                result.append(doc)
-        return result
+        try:
+            matches = jsonpath_ng.parse(field).find(json_document)
+            return [match.value for match in matches]
+        except jsonpath_ng.exceptions.JsonPathParserError:          # Некорректный синтаксис пути
+            return []
+        except (AttributeError, KeyError, TypeError, IndexError):
+            return []
