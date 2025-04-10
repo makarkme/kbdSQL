@@ -3,11 +3,11 @@ from datetime import datetime
 
 
 class QueryEngine:
-    def __init__(self, get_value):
-        self.get_value = get_value
+    def __init__(self, collection):
+        self.collection = collection
 
-    def parse_query(self, query: dict):                                 # Проверяет, подходит ли документ под условие
-        conditions = []                                                 # Все условия, которые были заданы
+    def parse_query(self, query: dict):                             # Проверяет, подходит ли документ под условие
+        conditions = []                                             # Все условия, которые были заданы
 
         # Обработка логических операторов
         if "@or" in query:
@@ -22,7 +22,7 @@ class QueryEngine:
 
         # Обработка полей и условий
         for field, condition in query.items():
-            if isinstance(condition, dict):                             # Если условие в словаре
+            if isinstance(condition, dict):                         # Если условие в словаре
                 for operator, value in condition.items():
                     if operator == "@regex":
                         conditions.append(self.regex_condition(field, value))
@@ -32,7 +32,7 @@ class QueryEngine:
                         conditions.append(self.lower_condition(field, value))
                     elif operator == "@upper":
                         conditions.append(self.upper_condition(field, value))
-                    else:                                               # Всё, что не является специальными функциями
+                    else:                                           # Всё, что не является специальными функциями
                         conditions.append(self.create_condition(field, operator, value))
             else:
                 if isinstance(condition, (str, int, float, bool)):
@@ -43,16 +43,16 @@ class QueryEngine:
         return lambda doc: all(cond(doc) for cond in conditions)
 
 
-    def create_condition(self, field, operator: str, value):            # field - поле, по которому ишём, value - значение, с которым сравниваем
-        def check(doc):                                                 # Будет вызываться для каждого документа
-            doc_value = self.get_value(doc, field)
+    def create_condition(self, field, operator: str, value):        # field - поле, по которому ишём, value - значение, с которым сравниваем
+        def check(doc):                                             # Будет вызываться для каждого документа
+            doc_value = self.collection.get_value(doc, field)
             if doc_value is None:
                 return False
 
             if isinstance(doc_value, list):
-                if operator == "@eq":                                   # Оператор ==
+                if operator == "@eq":                               # Оператор ==
                     return value in doc_value
-                elif operator == "@ne":                                 # Оператор !=
+                elif operator == "@ne":                             # Оператор !=
                     return value not in doc_value
                 return any(self.compare_items(item, operator, value) for item in doc_value)
 
@@ -89,7 +89,7 @@ class QueryEngine:
             if operator == "@endswith":
                 return doc_value.lower().endswith(value.lower())
 
-            try:                                                        # Для работы с датами (как ISO-строка)
+            try:                                                    # Для работы с датами (как ISO-строка)
                 doc_date = datetime.fromisoformat(doc_value)
                 if operator == "@year":
                     return doc_date.year == value
@@ -99,39 +99,36 @@ class QueryEngine:
                     return doc_date.day == value
             except ValueError:
                 pass
+        return False                                                # Если не сработало ни одно условие
 
-        return False                                                    # Если не сработало ни одно условие
 
-
-    def list_variable_condition(self, field, value):                    # Если значение в документе - список или простое значение
+    def list_variable_condition(self, field, value):                # Если значение в документе - список или простое значение
         def check(doc):
-            doc_value = self.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)
             if isinstance(doc_value, list):
                 return value in doc_value
             return doc_value == value
         return check
 
-    def regex_condition(self, field, pattern):                          # Для работы с регулярными выражениями
-        regex = re.compile(pattern)
+    def regex_condition(self, field, pattern):                      # Для работы с регулярными выражениями
         def check(doc):
-            doc_value = self.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)
             if doc_value:
-                return bool(regex.search(str(doc_value)))
+                return bool(re.compile(pattern).search(str(doc_value)))
             return False
         return check
 
     def length_condition(self, field, length):
         def check(doc):
-            doc_value = self.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)
             if isinstance(doc_value, (list, str)):
                 return len(doc_value) == length
             return False
-
         return check
 
     def lower_condition(self, field, value):
         def check(doc):
-            doc_value = self.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)
             if isinstance(doc_value, str):
                 return doc_value.lower() == value.lower()
             return False
@@ -139,7 +136,7 @@ class QueryEngine:
 
     def upper_condition(self, field, value):
         def check(doc):
-            doc_value = self.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)
             if isinstance(doc_value, str):
                 return doc_value.upper() == value.upper()
             return False
