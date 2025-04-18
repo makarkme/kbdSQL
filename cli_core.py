@@ -39,7 +39,7 @@ class Storage:
         path_to_database = os.path.join(path_to_storage, database_name)
         if not os.path.exists(path_to_database):                                # Проверка, если путь не существует
             typer.echo(f"[ERROR]: Database '{path_to_storage}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(code=1)
 
         shutil.rmtree(path_to_database)                                         # Рекурсивно удаляет файл и всё её содержимое
         typer.echo(f"[DELETED]: '{database_name}'")
@@ -58,7 +58,7 @@ class DB:
         try:
             self.database.insert(string)
             typer.echo("[INSERTED]: Successfully.")
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, SyntaxError):
             typer.echo("[ERROR]: Invalid JSON.")
         except Exception as e:
             typer.echo(f"[ERROR]: {e}")
