@@ -120,7 +120,7 @@ class QueryEngine:
 
     def length_condition(self, field, length):
         def check(doc):
-            doc_value = self.collection.get_value(doc, field)
+            doc_value = self.collection.get_value(doc, field)[0]
             if isinstance(doc_value, (list, str)):
                 return len(doc_value) == length
             return False
