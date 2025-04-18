@@ -86,7 +86,7 @@ class BTree:
         if i < len(node.get_keys()) and key == node.get_keys()[i]:  # Если нашли key в текущем узле
             return node.get_values()[i]                             # Возвращает [[id1_i, id2_i,...]
         elif node.leaf:                                             # Если не нашли key в B-дереве
-            return None
+            return []
         else:
             return self.search(key, node.children[i])               # Переходим к нужному дочернему узлу
 
