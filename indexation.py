@@ -19,18 +19,21 @@ class Indexation:
         self.path_to_indexes = os.path.join(self.collection.path_to_collection, "indexes")
         os.makedirs(self.path_to_indexes, exist_ok=True)
 
-        self.indexes = self.load_indexes()                          # Загружаем с диска проиндексированные поля {key=field; value=value}
+        self.indexes = self._load_indexes()  # Загружаем с диска проиндексированные поля {key=field; value=value}
 
         self.query_engine = self.collection.query_engine
 
-    def get_indexes(self):
+    def get_indexes(self) -> dict:
         return self.indexes
 
-    def load_indexes(self):
+    def _load_indexes(self) -> dict:
+        # Загружаем ранее проиндексированные поля
+
         indexes = {}
         for filename in os.listdir(self.path_to_indexes):
             if filename.endswith(".pkl"):
-                field = filename[:-len(".pkl")]                     # Убираем ".pkl" в конце имени файла (получаем поле, по которому индексировали)
+                field = filename[
+                        :-len(".pkl")]  # Убираем ".pkl" в конце имени файла (получаем поле, по которому индексировали)
                 path_to_index = os.path.join(self.path_to_indexes, filename)
                 with open(path_to_index, "rb") as file:
                     btree = pickle.load(file)
@@ -38,40 +41,41 @@ class Indexation:
         return indexes
 
     def create_index(self, field: str) -> int:
+        # Индексация выбранного поля по всем json-объектам в выбранной базе данных.
+        # Пример 1: python cli_core.py db mydb/users index age
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
+
         index = Index(field)
 
         count = 0
         for filename, json_document in self.collection.get_jsons():
-            values = self.collection.get_value(json_document, field)    # Получаем значение из каждого json-документа по указанному полю
+            # Получаем значение из каждого json-документа по указанному полю
+            values = self.collection.get_value(json_document, field)
             for value in values:
-                index.btree.insert(value, filename)
+                try:
+                    key = int(value)
+                except (ValueError, TypeError):
+                    key = str(value)
+                index.btree.insert(key, filename)
                 count += 1
 
         path_to_index = os.path.join(self.path_to_indexes, f"{field}.pkl")
         with open(path_to_index, "wb") as file:
             pickle.dump(index.btree, file)
 
-        self.indexes[field] = index                                 # Записываем проиндексированное
+        self.indexes[field] = index  # Записываем проиндексированное
         return count
 
-    def indexed_search(self, field: str, query: dict) -> list:      # Поиск производится по индексированным полям
-        index = self.indexes[field]                                 # B-дерево, в котором будет вестить поиск
+    def indexed_search(self, field: str, query: dict) -> list:
+        # Поиск по индексированным полям
+
+        index = self.indexes[field]  # B-дерево, в котором будет вестить поиск
         condition = query.get(field)
 
         if condition is None:
             return []
-
         if isinstance(condition, dict):
-            operator, value = next(iter(condition.items()))
+            operator, value = next(iter(condition.items()))  # Берёт первую пару (ключ; значение) из словаря
         else:
-            operator, value = "$eq", condition
-
-        filenames = index.btree.search(value)                       # Список подходящих документов по значению
-        query_func = self.query_engine.parse_query(query)
-
-        json_documents = []
-        for filename in filenames:
-            json_document = self.collection.get_json(filename)
-            if json_document and query_func(json_document):
-                json_documents.append(json_document)
-        return json_documents
+            operator, value = "@eq", condition
+        return index.btree.search(value)  # Список подходящих документов по значению
