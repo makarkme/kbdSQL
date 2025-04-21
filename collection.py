@@ -86,11 +86,20 @@ class Collection:
         with open(path_to_json_document, encoding="utf-8") as file:
             return json.load(file)
 
-    def get_value(self, json_document, field: str) -> list:  # По заданному полю возвращает его значение
+    def get_value(self, json_document, field: str) -> list:
+        # По заданному полю возвращает его значение
+
         try:
             matches = jsonpath_ng.parse(field).find(json_document)
-            return [match.value for match in matches]
-        except jsonpath_ng.exceptions.JsonPathParserError:  # Некорректный синтаксис пути
+            values = [match.value for match in matches]
+            flattened = []
+            for value in values:
+                if isinstance(value, list):
+                    flattened.extend(value)
+                else:
+                    flattened.append(value)
+            return flattened
+        except jsonpath_ng.exceptions.JsonPathParserError as error:  # Некорректный синтаксис пути
             return []
-        except (AttributeError, KeyError, TypeError, IndexError):
+        except (AttributeError, KeyError, TypeError, IndexError) as error:
             return []
