@@ -3,7 +3,6 @@ import json
 import ast
 
 from collection import Collection
-from indexation import Indexation
 
 
 class Database:
@@ -62,3 +61,9 @@ class Database:
             return self.collection.search_by_condition(query_dict)  # Возвращает список "подходящих" json-документов
         except Exception as error:
             raise error
+
+    def get_filenames(self) -> list:
+        # Вывод списка всех json-документов в заданной коллекции.
+        # Пример 1: python cli_core.py list_jsons
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" list_jsons
+        return self.collection.get_jsons()
