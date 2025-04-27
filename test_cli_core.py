@@ -121,6 +121,18 @@ class TestCLIIntegration(unittest.TestCase):
         count = self.db.index('name')
         self.assertEqual(count, 1)
 
+    def test_list_jsons(self):
+        self.db.insert("{'name': 'Eve'}")
+        self.db.insert("{'name': 'Frank'}")
+
+        json_files = [f for f in os.listdir(self.path_to_collection) if f.endswith('.json')]
+
+        self.assertEqual(len(json_files), 2)
+
+        filenames_in_db = self.db.database.collection.get_jsons()
+        filenames = [filename for filename, _ in filenames_in_db]
+
+        self.assertEqual(len(filenames), 2)
 
 
 if __name__ == "__main__":
