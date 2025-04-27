@@ -141,6 +141,19 @@ class DB:
             typer.echo(f"[ERROR]: {type(error).__name__}: {error}")
             raise typer.Exit(1)
 
+    def list_jsons(self):
+        # Вывод списка всех json-документов в заданной коллекции.
+        # Пример 1: python cli_core.py db mydb/users list_jsons
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users list_jsons
+        filenames = self.database.get_filenames()
+        if not filenames:
+            typer.echo(f"[WARNING]: JSONS not found in '{self.path_to_database}'.")
+            raise typer.Exit(0)
+        else:
+            typer.echo(f"[JSONS IN]: '{self.path_to_database}'")
+            for filename, _ in filenames:
+                typer.echo(f" -- {filename}")
+
 
 app = typer.Typer()
 db_app = typer.Typer()
@@ -203,6 +216,10 @@ def index(ctx: typer.Context, field: str):
 @db_app.command("condition", help="Search by condition in collection.")
 def search_by_condition(ctx: typer.Context, query: str):
     ctx.obj.search_by_condition(query)
+
+@db_app.command("list_jsons", help="Show jsons in collection.")
+def list_jsons(ctx: typer.Context):
+    ctx.obj.list_jsons()
 
 
 app.add_typer(db_app, name="db")
