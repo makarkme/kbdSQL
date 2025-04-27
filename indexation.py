@@ -66,6 +66,15 @@ class Indexation:
         self.indexes[field] = index  # Записываем проиндексированное
         return count
 
+    def remove_from_index(self, filename: str):
+        for field, index in self.indexes.items():
+            index.btree.remove_value(filename)
+
+            # Пересохраняем индекс на диск
+            path_to_index = os.path.join(self.path_to_indexes, f"{field}.pkl")
+            with open(path_to_index, "wb") as file:
+                pickle.dump(index.btree, file)
+
     def indexed_search(self, field: str, query: dict) -> list:
         # Поиск по индексированным полям
 
