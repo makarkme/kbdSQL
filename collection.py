@@ -31,6 +31,18 @@ class Collection:
             json.dump(json_document, file, indent=2, ensure_ascii=False)
         return filename
 
+    def delete(self, filename: str) -> str:
+        # Удаление json-объекта из выбранной базы данных.
+        # Пример 1: python cli_core.py db mydb/users delete "{'name': 'Иван', 'age': 18}"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "{'name': 'Иван', 'age': 18}"
+
+        path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
+        if not os.path.exists(path_to_json_document):
+            raise FileNotFoundError
+        self.indexation.remove_from_index(filename)
+        os.remove(path_to_json_document)
+        return path_to_json_document
+
     def search_by_condition(self, query: dict) -> list:
         # Поиск json-документов по заданному условию в выбранной базе данных.
         # Пример 1: python cli_core.py db mydb/users condition "{'age': {'@eq': 18}}"
@@ -42,17 +54,30 @@ class Collection:
             if field in indexes:
                 indexed_fields.append(field)
 
-        if not indexed_fields:
-            return self._complete_search(query)
-
-        matched_ids_sets = []  # список всех проиндексированных id, в которых содержатся field
-        for field in indexed_fields:
-            matched_ids = self.indexation.indexed_search(field, query)
-            matched_ids_sets.append(set(matched_ids))
-
-        filenames = set.intersection(*matched_ids_sets)  # находим общие id среди всех matched_ids
-
         query_func = self.query_engine.parse_query(query)
+
+        all_eq = True
+        for field in indexed_fields:
+            condition = query[field]
+            if isinstance(condition, dict):
+                operator, _ = next(iter(condition.items()))
+                if operator != "@eq":
+                    all_eq = False
+                    break
+
+        if all_eq:
+            matched_ids_sets = []
+            for field in indexed_fields:
+                matched_ids = self.indexation.indexed_search(field, query)
+                matched_ids_sets.append(set(matched_ids))
+            if matched_ids_sets:
+                filenames = set.intersection(*matched_ids_sets)
+            else:
+                filenames = set(filename for filename, _ in self.get_jsons())
+        else:
+            # Иначе — перебираем все файлы
+            filenames = set(filename for filename, _ in self.get_jsons())
+
         json_documents = []  # Список всех, подходящих под условие, json-документов
         for filename in filenames:
             json_document = self.get_json(filename)
@@ -60,14 +85,6 @@ class Collection:
                 json_documents.append(json_document)
         return json_documents
 
-    def _complete_search(self, query: dict) -> list:  # Поиск производится по всем документам
-        query_func = self.query_engine.parse_query(query)
-
-        json_documents = []  # Список всех, подходящих под условие, json-документов
-        for filename, json_document in self.get_jsons():  # Список всех документов (распаковываем кортеж)
-            if json_document and query_func(json_document):
-                json_documents.append(json_document)
-        return json_documents
 
     def get_jsons(self) -> list:  # Возвращает массив всех json-документов в коллекции
         json_documents = []
