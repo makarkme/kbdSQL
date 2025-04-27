@@ -17,11 +17,12 @@ class Storage:
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(1)
 
         databases = os.listdir(path_to_storage)
         if not databases:
             typer.echo(f"[WARNING]: Databases not found in '{path_to_storage}'.")
+            raise typer.Exit(0)
         else:
             typer.echo(f"[DATABASES IN]: '{path_to_storage}'")
             for database in databases:
@@ -34,7 +35,7 @@ class Storage:
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(1)
 
         path_to_database = os.path.join(path_to_storage, database_name)
         if not os.path.exists(path_to_database):
@@ -46,16 +47,16 @@ class Storage:
     def delete_database(self, database_name: str, path_to_storage: str = "./databases"):
         # Удаление базы данных в заданной папке (по-умолчанию /databases).
         # Пример 1: python cli_core.py delete mydb
-        # Привер 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" delete mydb
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" delete mydb
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(1)
 
         path_to_database = os.path.join(path_to_storage, database_name)
         if not os.path.exists(path_to_database):
             typer.echo(f"[ERROR]: Database '{path_to_database}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(1)
         else:
             shutil.rmtree(path_to_database)  # Рекурсивно удаляет файл и всё её содержимое
             typer.echo(f"[DELETED]: '{database_name}'")
@@ -67,7 +68,7 @@ class DB:
 
         if not os.path.exists(self.path_to_database):
             typer.echo(f"[ERROR]: Database '{current_database}' at '{path_to_storage}' not found.")
-            raise typer.Exit()
+            raise typer.Exit(1)
 
         self.database = Database(self.path_to_database, current_collection)
 
@@ -75,30 +76,58 @@ class DB:
         # Вставка json-объекта в выбранную базу данных.
         # Пример 1: python cli_core.py db mydb/users insert "{'name': 'Иван', 'age': 18}"
         # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users insert "{'name': 'Иван', 'age': 18}"
+        if not string.strip():
+            typer.echo("[ERROR]: Empty input.")
+            raise typer.Exit(1)
 
         try:
             self.database.insert(string)
             typer.echo("[INSERTED]: Successfully.")
-        except (json.JSONDecodeError, SyntaxError):
-            typer.echo("[ERROR]: Invalid JSON.")
+        except (json.JSONDecodeError, SyntaxError) as error:
+            typer.echo(f"[ERROR]: {type(error).__name__}")
+            raise typer.Exit(1)
         except Exception as error:
-            typer.echo(f"[ERROR]: {error}")
+            typer.echo(f"[ERROR]: {type(error).__name__}")
+            raise typer.Exit(1)
+
+    def delete(self, filename: str):
+        # Удаление json-файла из выбранной базы данных.
+        # Пример 1: python cli_core.py db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        if not filename.strip():
+            typer.echo("[ERROR]: Empty input.")
+            raise typer.Exit(1)
+
+        try:
+            path_to_json_document = self.database.delete(filename)
+            typer.echo(f"[DELETED]: {path_to_json_document} successfully.")
+        except Exception as error:
+            typer.echo(f"[ERROR]: {type(error).__name__}")
+            raise typer.Exit(1)
 
     def index(self, field: str):
         # Индексация выбранного поля по всем json-объектам в выбранной базе данных.
         # Пример 1: python cli_core.py db mydb/users index age
         # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
+        if not field.strip():
+            typer.echo("[ERROR]: Empty field name.")
+            raise typer.Exit(1)
 
         try:
             count = self.database.index(field)
             typer.echo(f"[INDEXED]: {count} entries indexed by field '{field}'.")
+            return count
         except Exception as error:
-            typer.echo(f"[ERROR]: {error}")
+            typer.echo(f"[ERROR]: {type(error).__name__}: {error}")
+            raise typer.Exit(1)
 
     def search_by_condition(self, query: str):
         # Поиск json-документов по заданному условию в выбранной базе данных.
         # Пример 1: python cli_core.py db mydb/users condition "{'age': {'@eq': 18}}"
         # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users condition "{'age': {'@eq': 18}}"
+        if not query.strip():
+            typer.echo("[ERROR]: Empty query.")
+            raise typer.Exit(1)
 
         try:
             json_documents = self.database.search_by_condition(query)  # Список "подходящих" json-документов
@@ -109,7 +138,8 @@ class DB:
                 for json_document in json_documents:
                     typer.echo(json_document)
         except Exception as error:
-            typer.echo(f"[ERROR]: {error}")
+            typer.echo(f"[ERROR]: {type(error).__name__}: {error}")
+            raise typer.Exit(1)
 
 
 app = typer.Typer()
@@ -117,7 +147,7 @@ db_app = typer.Typer()
 
 
 @app.callback()
-def main(ctx: typer.Context, storage_path: str = typer.Option("./databases", "--storage-path", "-s",
+def main(ctx: typer.Context, storage_path: str = typer.Option("./databases", "--storage-path", "-p",
                                                               help="Path to database storage directory.")):
     ctx.obj = {"storage_path": storage_path}
 
@@ -150,7 +180,7 @@ def db_callback(ctx: typer.Context,
 
     if "/" not in database_and_collection:
         typer.echo("[ERROR]: Please use format 'database_name/current_collection'")
-        raise typer.Exit()
+        raise typer.Exit(1)
     current_database, current_collection = database_and_collection.split("/", 1)
     ctx.obj = DB(current_database, path_to_storage, current_collection)
 
@@ -158,6 +188,11 @@ def db_callback(ctx: typer.Context,
 @db_app.command("insert", help="Insert json-object in collection.")
 def insert(ctx: typer.Context, string: str):
     ctx.obj.insert(string)
+
+
+@db_app.command("delete", help="Delete json-object in collection.")
+def delete(ctx: typer.Context, filename: str):
+    ctx.obj.delete(filename)
 
 
 @db_app.command("index", help="Index json-object in collection.")
