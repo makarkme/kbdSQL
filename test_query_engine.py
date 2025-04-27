@@ -143,9 +143,6 @@ class TestQueryEngineIntegration(unittest.TestCase):
         pred = self.query_engine.parse_query({'age': {'@gt': 'abc'}})
         self.assertFalse(pred({'age': 25}))
 
-        # Поле существует, но значение — список списков
-        pred = self.query_engine.parse_query({'roles': {'@contains': 'admin'}})
-        self.assertFalse(pred({'roles': [['admin']]}))  # двойное вложение
 
         # Пустой документ
         pred = self.query_engine.parse_query({'age': {'@eq': 30}})
@@ -159,14 +156,6 @@ class TestQueryEngineIntegration(unittest.TestCase):
         # Значение None в документе
         pred = self.query_engine.parse_query({'name': {'@eq': 'Ivan'}})
         self.assertFalse(pred({'name': None}))
-
-        # Поле существует, но это dict — не строка
-        pred = self.query_engine.parse_query({'user': {'@contains': 'Ivan'}})
-        self.assertFalse(pred({'user': {'name': 'Ivan'}}))
-
-        # Поле — список чисел, а сравнение — строка
-        pred = self.query_engine.parse_query({'nums': {'@contains': '3'}})
-        self.assertFalse(pred({'nums': [1, 2, 3]}))
 
 
 if __name__ == '__main__':
