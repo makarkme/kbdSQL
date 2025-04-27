@@ -1,3 +1,5 @@
+from collections import deque
+
 class Node:
     def __init__(self, leaf=False):
         self.data = [[], []]                                        # Самопичный итерируемый словарь [[keys], [values]] ВАЖНО: на 1 ключ может быть несколько values(id), поэтому key: [id1, id2, id3...]
@@ -53,6 +55,10 @@ class Node:
         self.data[0].pop(index)
         self.data[1].pop(index)
 
+    def remove_value(self, key, value: str):                        # Удаляет value по заданному key
+        i = self.data[0].index(key)
+        self.data[1][i].remove(value)
+
     def slice_data(self, start: int, end: int):
         temp_data = [[], []]
         for i in range(start, end):
@@ -62,9 +68,9 @@ class Node:
         self.data.clear()
         self.data = temp_data
 
-    def replace_data(self, index: int, key, value: str):
+    def replace_data(self, index: int, key, values: list):
         self.data[0][index] = key
-        self.data[1][index] = value
+        self.data[1][index] = values
 
 
 class BTree:
@@ -123,7 +129,7 @@ class BTree:
 
         new_child_node = Node(leaf=child.leaf)                      # Создаем 2 дочерний узел и копируем в него значения из 1 узла
         new_child_node.data = [child.data[0][:], child.data[1][:]]
-        new_child_node.children = child.children[:]
+        original_children = child.children[:]
 
         parent.children.insert(i + 1, new_child_node)               # Связываем родительский и новый дочерний узлы
 
@@ -137,8 +143,8 @@ class BTree:
         # new_child_node.slice_data(split + 1, 2 * (split + 1) - 1)
 
         if not child.leaf:                                          # Разделяем дочерние узлы между 2 узлами
-            child.children = child.children[:split + 1]
-            new_child_node.children = child.children[split + 1:]
+            child.children = original_children[:split + 1]
+            new_child_node.children = original_children[split + 1:]
 
     def delete(self, key, node=None, key_exists=None):
         if key_exists is None:
@@ -278,3 +284,55 @@ class BTree:
             left_child.pop_pair(-1)
             if len(left_child.children) > 0:                        # Если есть дочерние узлы, переносим последнего ребёнка из левого соседа в начало
                 add_node.children.insert(0, left_child.children.pop())
+
+    def remove_value(self, value: str, node=None):                  # Удаление value из всех node
+        if node is None:
+            node = self.root
+
+        i = 0
+        while i < len(node.get_keys()):
+            key = node.get_keys()[i]
+            values = node.get_values()[i]
+
+            if value in values:
+                node.remove_value(key, value)
+                if len(node.get_values()[i]) == 0:
+                    self.delete(key)                                # Тут происходит дальнейшая балансировка
+                    return self.remove_value(value, self.root)      # После удаления ключа из текущего узла пересчитываем всё заново
+
+            if not node.leaf:
+                self.remove_value(value, node.children[i])
+
+            i += 1
+
+        if not node.leaf:
+            self.remove_value(value, node.children[i])              # Обрабатываем последний дочерний узел
+
+    def print_tree(self) -> list:                                   # Возвращает список уровней
+        levels_nodes = [[self.root]]                                # Сначала строим список узлов по уровням
+        while any(not node.leaf for node in levels_nodes[-1]):      # Пока на последнем уровне есть хотя бы один внутренний узел
+            nxt = []
+            for node in levels_nodes[-1]:
+                if not node.leaf:
+                    nxt.extend(node.children)
+            levels_nodes.append(nxt)
+
+        h = len(levels_nodes)
+        result = []
+
+        for lvl in range(h - 1):                                    # Для всех уровней, кроме самого нижнего - просто ключи каждого узла
+            result.append([node.get_keys() for node in levels_nodes[lvl]])
+
+        if h == 1:                                                  # Корень
+            result.append([self.root.get_keys()])
+        elif h == 2:                                                # Корень + сразу листья - просто список всех листьев
+            result.append([node.get_keys() for node in levels_nodes[1]])
+        else:                                                       # Есть хотя бы 3 уровня - группируем листья по их родителям
+            parents = levels_nodes[-2]
+            bottom_groups = []
+            for parent in parents:                                  # Для каждого родителя собираем list of child.get_keys()
+                group = [child.get_keys() for child in parent.children]
+                bottom_groups.append(group)
+            result.append(bottom_groups)
+
+        return result
