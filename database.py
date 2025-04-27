@@ -13,7 +13,7 @@ class Database:
                     exist_ok=True)  # Создаст path_to_collection если его нет, либо проигнорирует, есть пусть уже создан
 
         self.collection = Collection(self.path_to_collection)
-        self.indexation = Indexation(self.collection)
+        self.indexation = self.collection.indexation
 
     def insert(self, string: str) -> str:
         # Вставка json-объекта в выбранную базу данных.
@@ -26,6 +26,16 @@ class Database:
 
         try:
             return self.collection.insert(json_document)  # Возвращает id json-документа
+        except Exception as error:
+            raise error
+
+    def delete(self, filename: str) -> str:
+        # Удаление json-файла из выбранной базы данных.
+        # Пример 1: python cli_core.py db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+
+        try:
+            return self.collection.delete(filename)
         except Exception as error:
             raise error
 
