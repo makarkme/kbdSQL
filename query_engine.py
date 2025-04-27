@@ -115,12 +115,12 @@ class QueryEngine:
             #     return doc_value.upper() == value.upper()
 
             # Подстроковые операции
-            if operator == "@contains":
-                return value.lower() in doc_value.lower()
-            if operator == "@startswith":
-                return doc_value.lower().startswith(value.lower())
-            if operator == "@endswith":
-                return doc_value.lower().endswith(value.lower())
+            # if operator == "@contains":
+            #     return value.lower() in doc_value.lower()
+            # if operator == "@startswith":
+            #     return doc_value.lower().startswith(value.lower())
+            # if operator == "@endswith":
+            #     return doc_value.lower().endswith(value.lower())
 
             try:  # Для работы с датами (как ISO-строка)
                 doc_date = datetime.fromisoformat(doc_value)
