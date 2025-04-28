@@ -3,9 +3,9 @@ import tempfile
 import shutil
 import os
 import pickle
-from collection import Collection
-from indexation import Indexation, Index
-from btree import BTree
+from code.collection import Collection
+from code.indexation import Indexation, Index
+from code.btree import BTree
 
 
 class TestIndexationIntegration(unittest.TestCase):

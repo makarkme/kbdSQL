@@ -1,5 +1,5 @@
 import unittest
-from btree import Node, BTree
+from code.btree import Node, BTree
 
 
 class TestNode(unittest.TestCase):

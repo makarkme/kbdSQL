@@ -3,7 +3,7 @@ import tempfile
 import shutil
 import os
 import json
-from database import Database
+from code.database import Database
 
 
 class TestDatabaseIntegration(unittest.TestCase):

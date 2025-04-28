@@ -4,8 +4,8 @@ import json
 import jsonpath_ng
 import jsonpath_ng.exceptions
 
-from query_engine import QueryEngine
-from indexation import Indexation
+from code.query_engine import QueryEngine
+from code.indexation import Indexation
 
 
 class Collection:

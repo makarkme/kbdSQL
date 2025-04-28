@@ -3,7 +3,7 @@ import os
 import shutil
 import json
 
-from database import Database
+from code.database import Database
 
 
 class Storage:
@@ -12,8 +12,8 @@ class Storage:
 
     def list_databases(self, path_to_storage: str = "./databases"):
         # Вывод списка всех баз данных в заданной папке (по-умолчанию /databases).
-        # Пример 1: python cli_core.py list
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" list
+        # Пример 1: python -m code.cli_core list
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" list
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
@@ -30,8 +30,8 @@ class Storage:
 
     def create_database(self, database_name: str, path_to_storage: str = "./databases"):
         # Создание базы данных в заданной папке (по-умолчанию /databases).
-        # Пример 1: python cli_core.py create mydb
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" create mydb
+        # Пример 1: python -m code.cli_core create mydb
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" create mydb
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
@@ -46,8 +46,8 @@ class Storage:
 
     def delete_database(self, database_name: str, path_to_storage: str = "./databases"):
         # Удаление базы данных в заданной папке (по-умолчанию /databases).
-        # Пример 1: python cli_core.py delete mydb
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" delete mydb
+        # Пример 1: python -m code.cli_core delete mydb
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" delete mydb
 
         if not os.path.exists(path_to_storage):
             typer.echo(f"[ERROR]: Directory '{path_to_storage}' not found.")
@@ -74,8 +74,8 @@ class DB:
 
     def insert(self, string: str):
         # Вставка json-объекта в выбранную базу данных.
-        # Пример 1: python cli_core.py db mydb/users insert "{'name': 'Иван', 'age': 18}"
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users insert "{'name': 'Иван', 'age': 18}"
+        # Пример 1: python -m code.cli_core db mydb/users insert "{'name': 'Иван', 'age': 18}"
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users insert "{'name': 'Иван', 'age': 18}"
         if not string.strip():
             typer.echo("[ERROR]: Empty input.")
             raise typer.Exit(1)
@@ -92,8 +92,8 @@ class DB:
 
     def delete(self, filename: str):
         # Удаление json-файла из выбранной базы данных.
-        # Пример 1: python cli_core.py db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        # Пример 1: python -m code.cli_core db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
         if not filename.strip():
             typer.echo("[ERROR]: Empty input.")
             raise typer.Exit(1)
@@ -107,8 +107,8 @@ class DB:
 
     def index(self, field: str):
         # Индексация выбранного поля по всем json-объектам в выбранной базе данных.
-        # Пример 1: python cli_core.py db mydb/users index age
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
+        # Пример 1: python -m code.cli_core db mydb/users index age
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
         if not field.strip():
             typer.echo("[ERROR]: Empty field name.")
             raise typer.Exit(1)
@@ -123,8 +123,8 @@ class DB:
 
     def search_by_condition(self, query: str):
         # Поиск json-документов по заданному условию в выбранной базе данных.
-        # Пример 1: python cli_core.py db mydb/users condition "{'age': {'@eq': 18}}"
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users condition "{'age': {'@eq': 18}}"
+        # Пример 1: python -m code.cli_core db mydb/users condition "{'age': {'@eq': 18}}"
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users condition "{'age': {'@eq': 18}}"
         if not query.strip():
             typer.echo("[ERROR]: Empty query.")
             raise typer.Exit(1)
@@ -143,8 +143,8 @@ class DB:
 
     def list_jsons(self):
         # Вывод списка всех json-документов в заданной коллекции.
-        # Пример 1: python cli_core.py db mydb/users list_jsons
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users list_jsons
+        # Пример 1: python -m code.cli_core db mydb/users list_jsons
+        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users list_jsons
         filenames = self.database.get_filenames()
         if not filenames:
             typer.echo(f"[WARNING]: JSONS not found in '{self.path_to_database}'.")

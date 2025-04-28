@@ -2,8 +2,7 @@ import unittest
 import tempfile
 import shutil
 import os
-import json
-from cli_core import Storage, DB
+from code.cli_core import Storage, DB
 
 class TestCLIIntegration(unittest.TestCase):
     def setUp(self):

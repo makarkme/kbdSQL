@@ -1,5 +1,3 @@
-from collections import deque
-
 class Node:
     def __init__(self, leaf=False):
         self.data = [[], []]                                        # Самопичный итерируемый словарь [[keys], [values]] ВАЖНО: на 1 ключ может быть несколько values(id), поэтому key: [id1, id2, id3...]

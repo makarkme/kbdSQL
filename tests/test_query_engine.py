@@ -1,8 +1,8 @@
 import unittest
 import tempfile
 import shutil
-from collection import Collection
-from query_engine import QueryEngine
+from code.collection import Collection
+from code.query_engine import QueryEngine
 
 
 class TestQueryEngineIntegration(unittest.TestCase):

@@ -1,7 +1,7 @@
 import pickle
 import os
 
-from btree import BTree
+from code.btree import BTree
 
 
 class Index:

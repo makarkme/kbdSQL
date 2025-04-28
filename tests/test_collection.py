@@ -2,7 +2,7 @@ import unittest
 import tempfile
 import shutil
 import os
-from collection import Collection
+from code.collection import Collection
 
 
 class TestCollectionIntegration(unittest.TestCase):
