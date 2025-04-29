@@ -87,15 +87,13 @@ class Collection:
         return json_documents
 
 
-    def get_jsons(self) -> list:  # Возвращает массив всех json-документов в коллекции
-        json_documents = []
+    def get_jsons(self):    # Возвращает массив всех json-документов в коллекции
         for file in os.listdir(self.path_to_collection):
             if file.endswith(".json"):
-                filename = file[:-len(".json")]  # Убираем ".json" в конце имени файла
+                filename = file[:-len(".json")]    # Убираем ".json" в конце имени файла
                 json_document = self.get_json(filename)
                 if json_document:
-                    json_documents.append((filename, json_document))
-        return json_documents
+                    yield (filename, json_document)
 
     def get_json(self, filename: str):  # Возвращает json-документ
         path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
