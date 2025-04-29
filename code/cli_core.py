@@ -131,7 +131,7 @@ class DB:
 
         try:
             json_documents = self.database.search_by_condition(query)  # Список "подходящих" json-документов
-            if json_documents is None:
+            if not json_documents:
                 typer.echo("[SEARCH]: Not found json_documents.")
             else:
                 typer.echo("[FOUND]:")
