@@ -17,7 +17,7 @@ class Database:
     def insert(self, string: str) -> str:
         # Вставка json-объекта в выбранную базу данных.
         # Пример 1: python -m code.cli_core db mydb/users insert "{'name': 'Иван', 'age': 18}"
-        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users insert "{'name': 'Иван', 'age': 18}"
+        # Пример 2: python -m code.cli_core --storage-path "./databases" db mydb/users insert "{'name': 'Иван', 'age': 18}"
         try:
             json_document = json.loads(string)
         except json.JSONDecodeError:
@@ -31,7 +31,7 @@ class Database:
     def delete(self, filename: str) -> str:
         # Удаление json-файла из выбранной базы данных.
         # Пример 1: python -m code.cli_core db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
-        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
+        # Пример 2: python -m code.cli_core --storage-path "./databases" db mydb/users delete "531b4cdd-bc58-4aa9-aca5-5d1b7c44715f"
 
         try:
             return self.collection.delete(filename)
@@ -41,7 +41,7 @@ class Database:
     def index(self, field: str) -> int:
         # Индексация выбранного поля по всем json-объектам в выбранной базе данных.
         # Пример 1: python -m code.cli_core db mydb/users index age
-        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
+        # Пример 2: python -m code.cli_core --storage-path "./databases" db mydb/users index age
         try:
             return self.indexation.create_index(field)  # Возвращает количество проиндексированных значений
         except Exception as error:
@@ -50,7 +50,7 @@ class Database:
     def search_by_condition(self, query: str) -> list:
         # Поиск json-документов по заданному условию в выбранной базе данных.
         # Пример 1: python -m code.cli_core db mydb/users condition "{'age': {'@eq': 18}}"
-        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users condition "{'age': {'@eq': 18}}"
+        # Пример 2: python -m code.cli_core --storage-path "./databases" db mydb/users condition "{'age': {'@eq': 18}}"
 
         try:
             query_dict = json.loads(query)
@@ -65,5 +65,5 @@ class Database:
     def get_filenames(self) -> list:
         # Вывод списка всех json-документов в заданной коллекции.
         # Пример 1: python -m code.cli_core list_jsons
-        # Пример 2: python -m code.cli_core --storage-path "E:\PyCharmProjects\kbdSQL\storage" list_jsons
+        # Пример 2: python -m code.cli_core --storage-path "./databases" list_jsons
         return self.collection.get_jsons()

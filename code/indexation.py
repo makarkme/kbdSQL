@@ -43,7 +43,7 @@ class Indexation:
     def create_index(self, field: str) -> int:
         # Индексация выбранного поля по всем json-объектам в выбранной базе данных.
         # Пример 1: python cli_core.py db mydb/users index age
-        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users index age
+        # Пример 2: python cli_core.py --storage-path "./databases" db mydb/users index age
 
         index = Index(field)
 
