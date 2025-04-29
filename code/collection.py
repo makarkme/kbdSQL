@@ -22,7 +22,7 @@ class Collection:
     def insert(self, json_document: dict) -> str:
         # Вставка json-объекта в выбранную базу данных.
         # Пример 1: python cli_core.py db mydb/users insert "{'name': 'Иван', 'age': 18}"
-        # Пример 2: python cli_core.py --storage-path "./databases" db mydb/users insert "{'name': 'Иван', 'age': 18}"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users insert "{'name': 'Иван', 'age': 18}"
 
         filename = str(uuid.uuid4())  # Генерация уникального id документа
 
@@ -34,7 +34,7 @@ class Collection:
     def delete(self, filename: str) -> str:
         # Удаление json-объекта из выбранной базы данных.
         # Пример 1: python cli_core.py db mydb/users delete "{'name': 'Иван', 'age': 18}"
-        # Пример 2: python cli_core.py --storage-path "./databases" db mydb/users delete "{'name': 'Иван', 'age': 18}"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users delete "{'name': 'Иван', 'age': 18}"
 
         path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
         if not os.path.exists(path_to_json_document):
@@ -46,7 +46,7 @@ class Collection:
     def search_by_condition(self, query: dict) -> list:
         # Поиск json-документов по заданному условию в выбранной базе данных.
         # Пример 1: python cli_core.py db mydb/users condition "{'age': {'@eq': 18}}"
-        # Пример 2: python cli_core.py --storage-path "./databases" db mydb/users condition "{'age': {'@eq': 18}}"
+        # Пример 2: python cli_core.py --storage-path "E:\PyCharmProjects\kbdSQL\storage" db mydb/users condition "{'age': {'@eq': 18}}"
 
         indexes = self.indexation.get_indexes()
         indexed_fields = []  # проиндексированные поля, которые содержатся в запросе
@@ -82,18 +82,19 @@ class Collection:
         for filename in filenames:
             json_document = self.get_json(filename)
             if json_document and query_func(json_document):
-                json_documents.append(filename)
                 json_documents.append(json_document)
         return json_documents
 
 
-    def get_jsons(self):    # Возвращает массив всех json-документов в коллекции
+    def get_jsons(self) -> list:  # Возвращает массив всех json-документов в коллекции
+        json_documents = []
         for file in os.listdir(self.path_to_collection):
             if file.endswith(".json"):
-                filename = file[:-len(".json")]    # Убираем ".json" в конце имени файла
+                filename = file[:-len(".json")]  # Убираем ".json" в конце имени файла
                 json_document = self.get_json(filename)
                 if json_document:
-                    yield (filename, json_document)
+                    json_documents.append((filename, json_document))
+        return json_documents
 
     def get_json(self, filename: str):  # Возвращает json-документ
         path_to_json_document = os.path.join(self.path_to_collection, f"{filename}.json")
