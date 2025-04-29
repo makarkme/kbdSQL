@@ -82,6 +82,7 @@ class Collection:
         for filename in filenames:
             json_document = self.get_json(filename)
             if json_document and query_func(json_document):
+                json_documents.append(filename)
                 json_documents.append(json_document)
         return json_documents
 
